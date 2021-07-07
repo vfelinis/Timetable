@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Timetable.Common\Timetable.Common.csproj" />
+    <ProjectReference Include="..\Timetable.Core\Timetable.Core.csproj" />
+  </ItemGroup>
+
+</Project>

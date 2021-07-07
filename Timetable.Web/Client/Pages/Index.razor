@@ -1,0 +1,141 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<h1>Timetable</h1>
+
+<h2 style="color:red;">@error</h2>
+
+<EditForm Model="@formItem" OnValidSubmit="@HandleValidSubmit" class="card card-body bg-light mt-5">
+    <DataAnnotationsValidator />
+
+    <div class="form-group row">
+        <label for="date" class="col-md-2 col-form-label">Date:</label>
+        <div class="col-md-10">
+            <InputDate id="date" class="form-control" @bind-Value="formItem.Date" />
+            <ValidationMessage For="@(() => formItem.Date)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="groupName" class="col-md-2 col-form-label">Group Name:</label>
+        <div class="col-md-10">
+            <InputText id="groupName" class="form-control" @bind-Value="formItem.GroupName" />
+            <ValidationMessage For="@(() => formItem.GroupName)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="lessonNumber" class="col-md-2 col-form-label">Lesson Number:</label>
+        <div class="col-md-10">
+            <InputSelect id="lessonNumber" class="form-control" @bind-Value="formItem.LessonNumber">
+                @foreach (var number in Enum.GetValues(typeof(LessonNumber)))
+                {
+                    <option value="@number">@number</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => formItem.LessonNumber)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="lessonName" class="col-md-2 col-form-label">Lesson Name:</label>
+        <div class="col-md-10">
+            <InputText id="lessonName" class="form-control" @bind-Value="formItem.LessonName" />
+            <ValidationMessage For="@(() => formItem.LessonName)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="teacher" class="col-md-2 col-form-label">Teacher:</label>
+        <div class="col-md-10">
+            <InputText id="teacher" class="form-control" @bind-Value="formItem.Teacher" />
+            <ValidationMessage For="@(() => formItem.Teacher)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="room" class="col-md-2 col-form-label">Room:</label>
+        <div class="col-md-10">
+            <InputText id="room" class="form-control" @bind-Value="formItem.Room" />
+            <ValidationMessage For="@(() => formItem.Room)" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <button onclick="(() => HandleSubmit())" type="submit" class="btn btn-success">Save</button>
+        </div>
+    </div>
+</EditForm>
+
+@if (items == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @foreach (var date in items.GroupBy(s => s.Date.ToString()))
+    {
+        <div class="card card-body bg-light mt-5">
+            <h2>@date.Key</h2>
+            @foreach (var group in date.GroupBy(s => s.Group.Name.ToUpper()))
+            {
+                <div>
+                    <h5>@group.Key</h5>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Lesson Number</th>
+                                <th>Lesson Name</th>
+                                <th>Teacher</th>
+                                <th>Room</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var lesson in group)
+                            {
+                                <tr>
+                                    <td>@((int)lesson.LessonNumber)</td>
+                                    <td>@lesson.Lesson.Name</td>
+                                    <td>@lesson.Lesson.Teacher</td>
+                                    <td>@lesson.Lesson.Room</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private TimetableItemFormModel formItem = new() { Date = DateTime.Now };
+    private List<TimetableItemModel> items;
+    private string error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        items = await Http.GetFromJsonAsync<List<TimetableItemModel>>("api/timetable");
+    }
+
+    private void HandleSubmit()
+    {
+        error = null;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync<TimetableItemFormModel>("api/timetable", formItem);
+            items = await response.Content.ReadFromJsonAsync<List<TimetableItemModel>>();
+            formItem = new() { Date = DateTime.Now };
+        }
+        catch (Exception ex)
+        {
+
+            error = ex.Message;
+        }
+    }
+}
